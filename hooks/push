@@ -1,0 +1,6 @@
+#!/bin/bash
+
+TO=yolean/gcs-stats-prometheus:$SOURCE_COMMIT
+
+docker tag $IMAGE_NAME $TO
+docker push $TO
