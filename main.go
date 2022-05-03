@@ -30,6 +30,10 @@ var (
 		Name: "gcs_items_total",
 		Help: "Current total number of blobs",
 	})
+	total_size = promauto.NewGauge(prometheus.GaugeOpts{
+		Name: "gcs_size_total",
+		Help: "Current aggregate size of blobs in bytes",
+	})
 )
 
 func init() {
@@ -52,6 +56,7 @@ func check(ctx context.Context, client *storage.Client, bucketName string, logge
 	var names []string
 	var countTotal int
 	var countStale int
+	var sizeTotal int64
 	it := bkt.Objects(ctx, query)
 	for {
 		attrs, err := it.Next()
@@ -74,12 +79,15 @@ func check(ctx context.Context, client *storage.Client, bucketName string, logge
 			countStale++
 		}
 		countTotal++
+		sizeTotal += attrs.Size
 	}
 	stale_count.Set(float64(countStale))
 	total_count.Set(float64(countTotal))
+	total_size.Set(float64(sizeTotal))
 	logger.Info("stat results",
 		zap.Int("total count", countTotal),
 		zap.Int("stale count", countStale),
+		zap.Int64("total size", sizeTotal),
 	)
 }
 
