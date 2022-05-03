@@ -22,18 +22,9 @@ var (
 	metrics     string
 	stale       time.Duration
 	pause       time.Duration
-	stale_count = promauto.NewGauge(prometheus.GaugeOpts{
-		Name: "gcs_items_stale",
-		Help: "Current number of stale (as defined by cli arg) blobs",
-	})
-	total_count = promauto.NewGauge(prometheus.GaugeOpts{
-		Name: "gcs_items_total",
-		Help: "Current total number of blobs",
-	})
-	total_size = promauto.NewGauge(prometheus.GaugeOpts{
-		Name: "gcs_size_total",
-		Help: "Current aggregate size of blobs in bytes",
-	})
+	stale_count prometheus.Gauge
+	total_count prometheus.Gauge
+	total_size  prometheus.Gauge
 )
 
 func init() {
@@ -47,6 +38,25 @@ func init() {
 }
 
 func check(ctx context.Context, client *storage.Client, bucketName string, logger *zap.Logger) {
+
+	labels := prometheus.Labels{
+		"bucket": bucketName,
+	}
+	stale_count = promauto.NewGauge(prometheus.GaugeOpts{
+		Name:        "gcs_items_stale",
+		Help:        "Current number of stale (as defined by cli arg) blobs",
+		ConstLabels: labels,
+	})
+	total_count = promauto.NewGauge(prometheus.GaugeOpts{
+		Name:        "gcs_items_total",
+		Help:        "Current total number of blobs",
+		ConstLabels: labels,
+	})
+	total_size = promauto.NewGauge(prometheus.GaugeOpts{
+		Name:        "gcs_size_total",
+		Help:        "Current aggregate size of blobs in bytes",
+		ConstLabels: labels,
+	})
 
 	bkt := client.Bucket(bucketName)
 
