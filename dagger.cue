@@ -4,6 +4,7 @@ import (
 	"strings"
 	"dagger.io/dagger"
 	"universe.dagger.io/docker"
+	"universe.dagger.io/docker/cli"
 )
 
 // This action builds a docker image from a python app.
@@ -16,6 +17,8 @@ dagger.#Plan & {
 	client: {
 		filesystem: "./": read: contents: dagger.#FS
 
+		network: "unix:///var/run/docker.sock": connect: dagger.#Socket
+
 		commands: {
 			gitref: {
 				name: "git"
@@ -25,6 +28,7 @@ dagger.#Plan & {
 	}
 
 	actions: {
+		_image: "yolean/gcs-stats-prometheus"
 		_gitref: {
 			tag: strings.TrimSpace(client.commands.gitref.stdout)
 		}
@@ -33,7 +37,12 @@ dagger.#Plan & {
 		}
 		push: docker.#Push & {
 			image: build.output
-			dest:  "yolean/gcs-stats-prometheus:\(_gitref.tag)"
+			dest:  "\(_image):\(_gitref.tag)"
+		}
+		load: cli.#Load & {
+			image: build.output
+			host:  client.network."unix:///var/run/docker.sock".connect
+			tag:   "\(_image):\(_gitref.tag)"
 		}
 	}
 }
