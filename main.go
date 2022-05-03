@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"context"
+
 	"cloud.google.com/go/storage"
 	"google.golang.org/api/iterator"
 
@@ -17,17 +18,17 @@ import (
 )
 
 var (
-	bucket string
-	metrics string
-	stale time.Duration
-	pause time.Duration
+	bucket      string
+	metrics     string
+	stale       time.Duration
+	pause       time.Duration
 	stale_count = promauto.NewGauge(prometheus.GaugeOpts{
 		Name: "gcs_items_stale",
 		Help: "Current number of stale (as defined by cli arg) blobs",
 	})
 	total_count = promauto.NewGauge(prometheus.GaugeOpts{
 		Name: "gcs_items_total",
-		Help: "Current total number of blobs blobs",
+		Help: "Current total number of blobs",
 	})
 )
 
@@ -63,7 +64,7 @@ func check(ctx context.Context, client *storage.Client, bucketName string, logge
 			)
 		}
 		names = append(names, attrs.Name)
-		age := now.Sub(attrs.Updated);
+		age := now.Sub(attrs.Updated)
 		if age > stale {
 			logger.Info("Stale item",
 				zap.String("bucket", bucket),
