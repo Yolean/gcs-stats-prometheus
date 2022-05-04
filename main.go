@@ -37,8 +37,7 @@ func init() {
 	flag.Parse()
 }
 
-func check(ctx context.Context, client *storage.Client, bucketName string, logger *zap.Logger) {
-
+func initMetrics(bucketName string) {
 	labels := prometheus.Labels{
 		"bucket": bucketName,
 	}
@@ -57,6 +56,9 @@ func check(ctx context.Context, client *storage.Client, bucketName string, logge
 		Help:        "Current aggregate size of blobs in bytes",
 		ConstLabels: labels,
 	})
+}
+
+func check(ctx context.Context, client *storage.Client, bucketName string, logger *zap.Logger) {
 
 	bkt := client.Bucket(bucketName)
 
@@ -121,6 +123,8 @@ func main() {
 		zap.Duration("stale", stale),
 		zap.Duration("pause", pause),
 	)
+
+	initMetrics(bucket)
 
 	http.Handle("/metrics", promhttp.Handler())
 	go func() {
